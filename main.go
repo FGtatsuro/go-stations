@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
+	"sync"
 	"syscall"
 	"time"
 
@@ -65,23 +66,36 @@ func realMain() error {
 	)
 	defer stop()
 
-	go func() {
-		if err := server.ListenAndServe(); err != nil && err != http.ErrServerClosed {
-			log.Fatalln("main: could not listen on 8000, err =", err)
-		} else {
-			log.Printf("main: listen port is closed\n")
-		}
-	}()
-	<-ctx.Done()
-
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-	defer cancel()
-
-	if err := server.Shutdown(ctx); err != nil {
-		log.Fatalln("main: could not gracefully shutdown the server, err =", err)
-	} else {
-		log.Printf("main: server is completely shutdown\n")
-	}
+	var wg sync.WaitGroup
+	run(ctx, &wg, server)
+	wg.Wait()
 
 	return nil
+}
+
+// run はHTTPサーバに対するGraceful shutdownを提供する。
+//
+// [context.Context] 及び [sync.WaitGroup]を共有する事で複数サーバのGraceful shutdownを同時に制御できる。
+func run(ctx context.Context, wg *sync.WaitGroup, srv *http.Server) {
+	go func() {
+		defer wg.Done()
+
+		<-ctx.Done()
+
+		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+		defer cancel()
+
+		if err := srv.Shutdown(ctx); err != nil {
+			log.Fatalln("main: could not gracefully shutdown the server, err =", err)
+		} else {
+			log.Printf("main: server is completely shutdown\n")
+		}
+	}()
+
+	wg.Add(1)
+	if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+		log.Fatalf("main: could not listen on %v, err =%v\n", srv.Addr, err)
+	} else {
+		log.Printf("main: listen port %v is closed\n", srv.Addr)
+	}
 }
