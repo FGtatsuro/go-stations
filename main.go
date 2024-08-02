@@ -1,8 +1,12 @@
 package main
 
 import (
+	"context"
 	"log"
+	"net/http"
 	"os"
+	"os/signal"
+	"syscall"
 	"time"
 
 	"github.com/TechBowl-japan/go-stations/db"
@@ -49,8 +53,35 @@ func realMain() error {
 
 	// NOTE: 新しいエンドポイントの登録はrouter.NewRouterの内部で行うようにする
 	mux := router.NewRouter(todoDB)
+	server := &http.Server{
+		Addr:    port,
+		Handler: mux,
+	}
 
-	// TODO: サーバーをlistenする
+	ctx, stop := signal.NotifyContext(
+		context.Background(),
+		syscall.SIGINT,
+		syscall.SIGTERM,
+	)
+	defer stop()
+
+	go func() {
+		if err := server.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+			log.Fatalln("main: could not listen on 8000, err =", err)
+		} else {
+			log.Printf("main: listen port is closed\n")
+		}
+	}()
+	<-ctx.Done()
+
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	if err := server.Shutdown(ctx); err != nil {
+		log.Fatalln("main: could not gracefully shutdown the server, err =", err)
+	} else {
+		log.Printf("main: server is completely shutdown\n")
+	}
 
 	return nil
 }
