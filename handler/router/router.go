@@ -21,16 +21,16 @@ func NewRouter(todoDB *sql.DB) *http.ServeMux {
 		middleware.With(
 			handler.NewTODOHandler(service.NewTODOService(todoDB)),
 			middleware.NewAccessLogMiddleware(),
-			&middleware.UserAgentRecordMiddleware{},
-			&middleware.RecoveryMiddleware{},
+			middleware.NewUserAgentRecordMiddleware(),
+			middleware.NewRecoveryMiddleware(),
 		),
 	)
 	mux.Handle("/do-panic",
 		middleware.With(
 			handler.NewPanicHandler(),
 			middleware.NewAccessLogMiddleware(),
-			&middleware.UserAgentRecordMiddleware{},
-			&middleware.RecoveryMiddleware{},
+			middleware.NewUserAgentRecordMiddleware(),
+			middleware.NewRecoveryMiddleware(),
 		),
 	)
 
