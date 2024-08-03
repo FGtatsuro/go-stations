@@ -67,7 +67,7 @@ func realMain() error {
 	defer stop()
 
 	var wg sync.WaitGroup
-	run(ctx, &wg, server)
+	go run(ctx, &wg, server)
 	wg.Wait()
 
 	return nil
