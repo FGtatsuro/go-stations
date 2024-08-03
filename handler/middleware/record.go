@@ -13,6 +13,9 @@ const (
 	UAContextKeyOS = uaContextKey("os")
 )
 
+// UserAgentRecord は、[context.Context] にリクエストのOS情報をセットするHTTPミドルウェアである。
+//
+// 利用側は、[UAContextKeyOS] をキーとしてリクエストのOS情報を取り出す。
 func UserAgentRecord(h http.Handler) http.Handler {
 	fn := func(w http.ResponseWriter, r *http.Request) {
 		ua := useragent.Parse(r.UserAgent())
