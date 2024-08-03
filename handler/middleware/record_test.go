@@ -39,7 +39,7 @@ func TestUserAgentRecord(t *testing.T) {
 			tc.userAgent,
 		)
 		w := httptest.NewRecorder()
-		m := middleware.UserAgentRecordMiddleware{}
+		m := middleware.NewUserAgentRecordMiddleware()
 		h := m.ServeNext(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			got := r.Context().Value(middleware.UAContextKeyOS)
 			want := tc.wantOS

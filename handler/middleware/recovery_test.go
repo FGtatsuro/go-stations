@@ -11,7 +11,7 @@ import (
 func TestRecovery(t *testing.T) {
 	r := httptest.NewRequest(http.MethodGet, "/", nil)
 	w := httptest.NewRecorder()
-	m := middleware.RecoveryMiddleware{}
+	m := middleware.NewRecoveryMiddleware()
 	h := m.ServeNext(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		panic("test")
 	}))

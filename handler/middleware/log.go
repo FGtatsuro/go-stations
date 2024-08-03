@@ -17,12 +17,11 @@ type accessLog struct {
 	OS        string
 }
 
-// accessLogMiddleware は、 アクセスログを w に書き込むHTTPミドルウェアである。
 type accessLogMiddleware struct {
 	w io.Writer
 }
 
-// NewAccessLogMiddleware は、 書き込み先として標準出力を指定したアクセスログミドルウェアを返す。
+// NewAccessLogMiddleware は、 書き込み先として標準出力を指定したミドルウェアを返す。
 func NewAccessLogMiddleware() *accessLogMiddleware {
 	return &accessLogMiddleware{
 		w: os.Stdout,
