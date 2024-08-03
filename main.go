@@ -86,7 +86,7 @@ func run(ctx context.Context, wg *sync.WaitGroup, srv *http.Server) {
 		defer cancel()
 
 		if err := srv.Shutdown(ctx); err != nil {
-			log.Fatalln("main: could not gracefully shutdown the server, err =", err)
+			log.Printf("main: could not gracefully shutdown the server, err =%v\n", err)
 		} else {
 			log.Printf("main: server is completely shutdown\n")
 		}
@@ -94,7 +94,7 @@ func run(ctx context.Context, wg *sync.WaitGroup, srv *http.Server) {
 
 	wg.Add(1)
 	if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
-		log.Fatalf("main: could not listen on %v, err =%v\n", srv.Addr, err)
+		log.Printf("main: could not listen on %v, err =%v\n", srv.Addr, err)
 	} else {
 		log.Printf("main: listen port %v is closed\n", srv.Addr)
 	}
