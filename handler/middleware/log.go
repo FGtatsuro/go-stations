@@ -9,7 +9,7 @@ import (
 	"time"
 )
 
-// accessLog は、日時、処理時間等のアクセス情報を表す構造体である。
+// accessLog は、日時、処理時間等のアクセスログを表す構造体である。
 type accessLog struct {
 	Timestamp time.Time
 	Latency   int64
@@ -17,26 +17,26 @@ type accessLog struct {
 	OS        string
 }
 
-// accessLogMiddleware は、 [accessLog] を w に書き込むHTTPミドルウェアである。
+// accessLogMiddleware は、 アクセスログを w に書き込むHTTPミドルウェアである。
 type accessLogMiddleware struct {
 	w io.Writer
 }
 
-// NewAccessLogMiddleware は、 書き込み先として標準出力を指定した [AccessLogMiddleware] を返す。
+// NewAccessLogMiddleware は、 書き込み先として標準出力を指定したアクセスログミドルウェア返す。
 func NewAccessLogMiddleware() *accessLogMiddleware {
 	return &accessLogMiddleware{
 		w: os.Stdout,
 	}
 }
 
-// ServeNext は、 h の前後で取得した情報を元に、 [accessLog] を記録する。
+// ServeNext は、 h の前後で取得した情報を元に、 アクセスログを記録する。
 func (m *accessLogMiddleware) ServeNext(h http.Handler) http.Handler {
 	fn := func(w http.ResponseWriter, r *http.Request) {
 		before := time.Now()
 		h.ServeHTTP(w, r)
 		after := time.Now()
 
-		// NOTE: UserAgentRecordMiddleware によりOS情報がContextに記録されている事を前提とする。
+		// NOTE: OS情報がContextに記録されている事を前提とする。
 		os, ok := r.Context().Value(UAContextKeyOS).(string)
 		if !ok {
 			log.Printf("AccessLogMiddleware: os can not be fetched\n")
