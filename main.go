@@ -65,8 +65,10 @@ func realMain() error {
 		syscall.SIGTERM,
 	)
 	defer stop()
-
 	var wg sync.WaitGroup
+
+	// NOTE: serverの数だけAddする
+	wg.Add(1)
 	go run(ctx, &wg, server)
 	wg.Wait()
 
@@ -92,7 +94,6 @@ func run(ctx context.Context, wg *sync.WaitGroup, srv *http.Server) {
 		}
 	}()
 
-	wg.Add(1)
 	if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
 		log.Printf("main: could not listen on %v, err =%v\n", srv.Addr, err)
 	} else {
