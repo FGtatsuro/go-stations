@@ -5,12 +5,14 @@ import (
 	"net/http"
 )
 
-// Recovery は、[http.Handler] でpanicが発生した際のリカバリ処理を追加するHTTPミドルウェアである。
+// RecoveryMiddleware は、panicが発生した際のリカバリ処理を追加するHTTPミドルウェアである。
+type RecoveryMiddleware struct{}
+
+// ServeNext は、h でpanicが発生した際にリカバリ処理を行い、ユーザにstatus 500を返す。
 //
-// リカバリ処理が実行された場合、ユーザにはstatus 500を返す。
-// panic発生前に [http.ResponseWriter.WriteHeader] が呼ばれていた場合、statusは上書きされない。
-// [http.ResponseWriter.WriteHeader] がpanic発生前に呼ばれない事を保証するのは利用側の責務とする。
-func Recovery(h http.Handler) http.Handler {
+// panic発生前に [net/http.ResponseWriter] の WriteHeader が呼ばれていた場合、statusは上書きされない。
+// [net/http.ResponseWriter] の WriteHeader がpanic発生前に呼ばれない事を保証するのは利用側の責務とする。
+func (m *RecoveryMiddleware) ServeNext(h http.Handler) http.Handler {
 	fn := func(w http.ResponseWriter, r *http.Request) {
 		defer func() {
 			if p := recover(); p != nil {
