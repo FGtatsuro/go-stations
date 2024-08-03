@@ -12,9 +12,25 @@ import (
 func NewRouter(todoDB *sql.DB) *http.ServeMux {
 	// register routes
 	mux := http.NewServeMux()
+
 	mux.Handle("/healthz", handler.NewHealthzHandler())
-	mux.Handle("/todos", handler.NewTODOHandler(service.NewTODOService(todoDB)))
-	mux.Handle("/do-panic", middleware.Recovery(handler.NewPanicHandler()))
+
+	// NOTE: RecoveryMiddleware を最後の引数とすることで、一番始めに評価される。
+	// これにより、後述の処理でのpanicは全て RecoveryMiddleware で処理される。
+	mux.Handle("/todos",
+		middleware.With(
+			handler.NewTODOHandler(service.NewTODOService(todoDB)),
+			&middleware.UserAgentRecordMiddleware{},
+			&middleware.RecoveryMiddleware{},
+		),
+	)
+	mux.Handle("/do-panic",
+		middleware.With(
+			handler.NewPanicHandler(),
+			&middleware.UserAgentRecordMiddleware{},
+			&middleware.RecoveryMiddleware{},
+		),
+	)
 
 	return mux
 }

@@ -7,16 +7,17 @@ import (
 	"github.com/mileusna/useragent"
 )
 
+// UserAgentRecord は、[context.Context] にリクエストのOS情報をセットするHTTPミドルウェアである。
+type UserAgentRecordMiddleware struct{}
+
 type uaContextKey string
 
 const (
 	UAContextKeyOS = uaContextKey("os")
 )
 
-// UserAgentRecord は、[context.Context] にリクエストのOS情報をセットするHTTPミドルウェアである。
-//
-// 利用側は、[UAContextKeyOS] をキーとしてリクエストのOS情報を取り出す。
-func UserAgentRecord(h http.Handler) http.Handler {
+// ServeNext は、[UAContextKeyOS] をキーとしてリクエストのOS情報を保存する。
+func (m *UserAgentRecordMiddleware) ServeNext(h http.Handler) http.Handler {
 	fn := func(w http.ResponseWriter, r *http.Request) {
 		ua := useragent.Parse(r.UserAgent())
 		ctx := context.WithValue(r.Context(), UAContextKeyOS, ua.OS)
