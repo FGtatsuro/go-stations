@@ -22,7 +22,7 @@ type accessLogMiddleware struct {
 	w io.Writer
 }
 
-// NewAccessLogMiddleware は、 書き込み先として標準出力を指定したアクセスログミドルウェア返す。
+// NewAccessLogMiddleware は、 書き込み先として標準出力を指定したアクセスログミドルウェアを返す。
 func NewAccessLogMiddleware() *accessLogMiddleware {
 	return &accessLogMiddleware{
 		w: os.Stdout,
