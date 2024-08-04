@@ -17,7 +17,7 @@ func NewBasicAuthCredential(userID, password string) (*BasicAuthCredential, erro
 		userID:   userID,
 		password: password,
 	}
-	if !cred.isValidCredential() {
+	if !cred.isValid() {
 		return nil, fmt.Errorf("与えられた認証情報は、Basic認証として不適切です")
 	}
 	return cred, nil
@@ -34,7 +34,7 @@ func NewBasicAuthMiddleware(cred BasicAuthCredential) *basicAuthMiddleware {
 	}
 }
 
-func (cred *BasicAuthCredential) isValidCredential() bool {
+func (cred *BasicAuthCredential) isValid() bool {
 	if cred.userID == "" || cred.password == "" {
 		return false
 	}
