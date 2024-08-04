@@ -5,17 +5,30 @@ import (
 	"net/http"
 )
 
+const (
+	defaultRealm = "Authorization Required Area"
+)
+
 // BasicAuthCredential はBasic認証の認証情報を表す。
 type BasicAuthCredential struct {
 	userID   string
 	password string
+	realm    string
 }
 
 // NewBasicAuthCredential は、妥当性が保証された BasicAuthCredential を返す。
+//
+// レルムにはデフォルト値が指定される。
 func NewBasicAuthCredential(userID, password string) (*BasicAuthCredential, error) {
+	return NewBasicAuthCredentialWithRealm(userID, password, defaultRealm)
+}
+
+// NewBasicAuthCredentialWithRealm は、レルムを指定した BasicAuthCredential を返す。
+func NewBasicAuthCredentialWithRealm(userID, password, realm string) (*BasicAuthCredential, error) {
 	cred := &BasicAuthCredential{
 		userID:   userID,
 		password: password,
+		realm:    realm,
 	}
 	if err := cred.validate(); err != nil {
 		return nil, err
@@ -56,6 +69,7 @@ func (cred *BasicAuthCredential) authenticate(r *http.Request) error {
 func (m *basicAuthMiddleware) ServeNext(h http.Handler) http.Handler {
 	fn := func(w http.ResponseWriter, r *http.Request) {
 		if err := m.cred.authenticate(r); err != nil {
+			w.Header().Add("WWW-Authenticate", fmt.Sprintf(`Basic realm="%s"`, m.cred.realm))
 			w.WriteHeader(http.StatusUnauthorized)
 			return
 		}
