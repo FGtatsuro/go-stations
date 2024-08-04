@@ -3,6 +3,7 @@ package middleware
 import (
 	"fmt"
 	"net/http"
+	"strings"
 )
 
 const (
@@ -51,6 +52,9 @@ func NewBasicAuthMiddleware(cred BasicAuthInfo) *basicAuthMiddleware {
 func (cred *BasicAuthInfo) validate() error {
 	if cred.userID == "" || cred.password == "" {
 		return fmt.Errorf("Basic認証のユーザID/パスワードは、空文字以外を指定する必要があります")
+	}
+	if strings.Contains(cred.userID, ":") {
+		return fmt.Errorf("Basic認証のユーザIDは、コロン(:)を含んではいけません")
 	}
 	return nil
 }
