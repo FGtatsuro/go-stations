@@ -47,9 +47,10 @@ func NewBasicAuthMiddleware(cred BasicAuthInfo) *basicAuthMiddleware {
 	}
 }
 
+// NOTE: サーバ起動失敗時に表示される情報であり、エラー詳細を含んでもユーザに見えないため問題ない。
 func (cred *BasicAuthInfo) validate() error {
 	if cred.userID == "" || cred.password == "" {
-		return fmt.Errorf("与えられた認証情報は、Basic認証として不適切です")
+		return fmt.Errorf("Basic認証のユーザID/パスワードは、空文字以外を指定する必要があります")
 	}
 	return nil
 }
