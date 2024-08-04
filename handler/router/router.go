@@ -53,7 +53,11 @@ func NewHandlerWithBasicAuth(
 	todoDB *sql.DB,
 	userID, password string,
 ) (http.Handler, error) {
-	bac, err := middleware.NewBasicAuthCredential(userID, password)
+	bac, err := middleware.NewBasicAuthInfoWithRealm(
+		userID,
+		password,
+		"go-stations-api",
+	)
 	if err != nil {
 		return nil, err
 	}
@@ -67,7 +71,7 @@ func NewHandlerWithBasicAuth(
 
 func newHandler(
 	todoDB *sql.DB,
-	cred *middleware.BasicAuthCredential,
+	cred *middleware.BasicAuthInfo,
 	ms ...middleware.HTTPMiddleware,
 ) http.Handler {
 	mux := http.NewServeMux()
