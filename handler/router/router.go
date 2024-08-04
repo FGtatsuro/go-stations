@@ -11,27 +11,24 @@ import (
 
 // Deprecated: [NewHandler] を使用して下さい。
 func NewRouter(todoDB *sql.DB) *http.ServeMux {
-	// register routes
 	mux := http.NewServeMux()
 
 	mux.Handle("/healthz", handler.NewHealthzHandler())
 
-	// NOTE: RecoveryMiddleware を最後の引数とすることで、一番始めに評価される。
-	// これにより、後述の処理でのpanicは全て RecoveryMiddleware で処理される。
 	mux.Handle("/todos",
 		middleware.With(
 			handler.NewTODOHandler(service.NewTODOService(todoDB)),
+			middleware.NewRecoveryMiddleware(),
 			middleware.NewAccessLogMiddleware(),
 			middleware.NewUserAgentRecordMiddleware(),
-			middleware.NewRecoveryMiddleware(),
 		),
 	)
 	mux.Handle("/do-panic",
 		middleware.With(
 			handler.NewPanicHandler(),
+			middleware.NewRecoveryMiddleware(),
 			middleware.NewAccessLogMiddleware(),
 			middleware.NewUserAgentRecordMiddleware(),
-			middleware.NewRecoveryMiddleware(),
 		),
 	)
 
@@ -61,11 +58,18 @@ func NewHandlerWithBasicAuth(
 	if err != nil {
 		return nil, err
 	}
+
+	// NOTE:
+	// RecoveryMiddleware より先に AccessLogMiddleware を評価する事で、
+	// panic発生時にもログを記録できる。
+	//
+	// AccessLogMiddleware/UserAgentRecordMiddleware で発生したpanicは、
+	// [net/http] のデフォルトのリカバリで処理される事に留意する。
 	return newHandler(todoDB,
 		bac,
+		middleware.NewRecoveryMiddleware(),
 		middleware.NewAccessLogMiddleware(),
 		middleware.NewUserAgentRecordMiddleware(),
-		middleware.NewRecoveryMiddleware(),
 	), nil
 }
 
