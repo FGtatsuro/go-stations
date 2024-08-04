@@ -41,10 +41,24 @@ func (cred *BasicAuthCredential) validate() error {
 	return nil
 }
 
+func (cred *BasicAuthCredential) authenticate(r *http.Request) error {
+	uid, passwd, ok := r.BasicAuth()
+	if !ok {
+		return fmt.Errorf("ユーザからの認証情報が取得できません")
+	}
+	if cred.userID != uid || cred.password != passwd {
+		return fmt.Errorf("認証に失敗しました")
+	}
+	return nil
+}
+
 // ServeNext は、 h の前後で取得した情報を元に、 アクセスログを記録する。
 func (m *basicAuthMiddleware) ServeNext(h http.Handler) http.Handler {
 	fn := func(w http.ResponseWriter, r *http.Request) {
-		fmt.Printf("Authentication\n")
+		if err := m.cred.authenticate(r); err != nil {
+			w.WriteHeader(http.StatusUnauthorized)
+			return
+		}
 		h.ServeHTTP(w, r)
 	}
 	return http.HandlerFunc(fn)
