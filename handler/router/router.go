@@ -41,20 +41,53 @@ func NewRouter(todoDB *sql.DB) *http.ServeMux {
 // NewHandler は、ルーティングを設定したHTTPハンドラを返す。
 func NewHandler(todoDB *sql.DB) http.Handler {
 	return newHandler(todoDB,
+		nil,
 		middleware.NewAccessLogMiddleware(),
 		middleware.NewUserAgentRecordMiddleware(),
 		middleware.NewRecoveryMiddleware(),
 	)
 }
 
-func newHandler(todoDB *sql.DB, ms ...middleware.HTTPMiddleware) http.Handler {
+// NewHandlerWithBasicAuthは、 /api 以下のパスにBasic認証を設定したHTTPハンドラを返す。
+func NewHandlerWithBasicAuth(
+	todoDB *sql.DB,
+	userID, password string,
+) (http.Handler, error) {
+	bac, err := middleware.NewBasicAuthCredential(userID, password)
+	if err != nil {
+		return nil, err
+	}
+	return newHandler(todoDB,
+		bac,
+		middleware.NewAccessLogMiddleware(),
+		middleware.NewUserAgentRecordMiddleware(),
+		middleware.NewRecoveryMiddleware(),
+	), nil
+}
+
+func newHandler(
+	todoDB *sql.DB,
+	cred *middleware.BasicAuthCredential,
+	ms ...middleware.HTTPMiddleware,
+) http.Handler {
 	mux := http.NewServeMux()
 
-	// NOTE: ヘルスチェック用エンドポイントにも他と同様のミドルウェアを適用して良いかは議論の余地がある。
 	mux.Handle("/healthz", handler.NewHealthzHandler())
 
+	// NOTE: 初級編の課題のテストが /todos に依存しているため、下記のパスは残したままとする
 	mux.Handle("/todos", handler.NewTODOHandler(service.NewTODOService(todoDB)))
-	mux.Handle("/do-panic", handler.NewPanicHandler())
+
+	// NOTE: 認証の範囲を限定する(e.g. ヘルスチェックには認証を設定したくない)ため、/api 以下のパスにのみ認証を設定する。
+	//
+	// Ref: https://forum.golangbridge.org/t/is-it-possible-to-combine-http-servemux/7495/4
+	api := http.NewServeMux()
+	api.Handle("/todos", handler.NewTODOHandler(service.NewTODOService(todoDB)))
+	api.Handle("/do-panic", handler.NewPanicHandler())
+	h := http.StripPrefix("/api", api)
+	if cred != nil {
+		h = middleware.With(h, middleware.NewBasicAuthMiddleware(*cred))
+	}
+	mux.Handle("/api/", h)
 
 	// *http.ServeMux は http.Handler interfaceを満たすため、他のハンドラ同様ミドルウェアが適用できる。
 	//
