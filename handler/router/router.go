@@ -50,11 +50,18 @@ func NewHandler(todoDB *sql.DB) http.Handler {
 func newHandler(todoDB *sql.DB, ms ...middleware.HTTPMiddleware) http.Handler {
 	mux := http.NewServeMux()
 
-	// NOTE: ヘルスチェック用エンドポイントにも他と同様のミドルウェアを適用して良いかは議論の余地がある。
 	mux.Handle("/healthz", handler.NewHealthzHandler())
 
+	// NOTE: 初級編の課題のテストが /todos に依存しているため、下記のパスは残したままとする
 	mux.Handle("/todos", handler.NewTODOHandler(service.NewTODOService(todoDB)))
-	mux.Handle("/do-panic", handler.NewPanicHandler())
+
+	// NOTE: 認証の範囲を限定する(e.g. ヘルスチェックには認証を設定したくない)ため、/api 以下のパスにのみ認証を設定する。
+	//
+	// Ref: https://forum.golangbridge.org/t/is-it-possible-to-combine-http-servemux/7495/4
+	apiMux := http.NewServeMux()
+	apiMux.Handle("/todos", handler.NewTODOHandler(service.NewTODOService(todoDB)))
+	apiMux.Handle("/do-panic", handler.NewPanicHandler())
+	mux.Handle("/api/", http.StripPrefix("/api", apiMux))
 
 	// *http.ServeMux は http.Handler interfaceを満たすため、他のハンドラ同様ミドルウェアが適用できる。
 	//
