@@ -45,7 +45,7 @@ func NewHandler(todoDB *sql.DB) http.Handler {
 	)
 }
 
-// NewHandlerWithBasicAuthは、 /api 以下のパスにBasic認証を設定したHTTPハンドラを返す。
+// NewHandlerWithBasicAuth は、/api 以下のパスにBasic認証を設定したHTTPハンドラを返す。
 func NewHandlerWithBasicAuth(
 	todoDB *sql.DB,
 	userID, password string,
@@ -97,7 +97,7 @@ func newHandler(
 	}
 	mux.Handle("/api/", h)
 
-	// *http.ServeMux は http.Handler interfaceを満たすため、他のハンドラ同様ミドルウェアが適用できる。
+	// *http.ServeMux は http.Handler インターフェースを満たすため、他のハンドラ同様ミドルウェアが適用できる。
 	//
 	// Ref: https://blog.afoolishmanifesto.com/posts/nesting-middleware-in-golang/
 	return middleware.With(
