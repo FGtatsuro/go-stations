@@ -15,6 +15,7 @@ type accessLog struct {
 	Latency   int64
 	Path      string
 	OS        string
+	Status    int
 }
 
 type accessLogMiddleware struct {
@@ -28,18 +29,34 @@ func NewAccessLogMiddleware() *accessLogMiddleware {
 	}
 }
 
+// statusResponseWriter は、HTTPステータスをログに記録するために、デフォルトの [net/http.ResponseWriter] を拡張した構造体である
+//
+// Ref: https://tutuz-tech.hatenablog.com/entry/2020/06/14/191416
+type statusResponseWriter struct {
+	http.ResponseWriter
+	status int
+}
+
+func (w *statusResponseWriter) WriteHeader(status int) {
+	w.status = status
+	w.ResponseWriter.WriteHeader(status)
+}
+
 // ServeNext は、 h の前後で取得した情報を元に、 アクセスログを記録する。
 func (m *accessLogMiddleware) ServeNext(h http.Handler) http.Handler {
 	fn := func(w http.ResponseWriter, r *http.Request) {
+		sw := &statusResponseWriter{
+			ResponseWriter: w,
+			status:         http.StatusOK,
+		}
 		before := time.Now()
-		h.ServeHTTP(w, r)
+		h.ServeHTTP(sw, r)
 		after := time.Now()
 
 		// NOTE: OS情報がContextに記録されている事を前提とする。
 		os, ok := r.Context().Value(UAContextKeyOS).(string)
 		if !ok {
 			log.Printf("AccessLogMiddleware: os can not be fetched\n")
-
 		}
 
 		al := accessLog{
@@ -47,6 +64,7 @@ func (m *accessLogMiddleware) ServeNext(h http.Handler) http.Handler {
 			Latency:   after.Sub(before).Milliseconds(),
 			Path:      r.URL.Path,
 			OS:        os,
+			Status:    sw.status,
 		}
 		if err := json.NewEncoder(m.w).Encode(al); err != nil {
 			log.Printf("AccessLogMiddleware: could not write access log, err =%v\n", err)
