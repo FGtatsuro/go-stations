@@ -65,7 +65,7 @@ func (cred *BasicAuthInfo) authenticate(r *http.Request) error {
 	return nil
 }
 
-// ServeNext は、 h の前後で取得した情報を元に、 アクセスログを記録する。
+// ServeNext は、Basic認証によるアクセス制限を行う。
 func (m *basicAuthMiddleware) ServeNext(h http.Handler) http.Handler {
 	fn := func(w http.ResponseWriter, r *http.Request) {
 		if err := m.cred.authenticate(r); err != nil {
