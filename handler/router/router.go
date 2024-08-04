@@ -9,6 +9,7 @@ import (
 	"github.com/TechBowl-japan/go-stations/service"
 )
 
+// Deprecated: [NewHandler] を使用して下さい。
 func NewRouter(todoDB *sql.DB) *http.ServeMux {
 	// register routes
 	mux := http.NewServeMux()
@@ -35,4 +36,31 @@ func NewRouter(todoDB *sql.DB) *http.ServeMux {
 	)
 
 	return mux
+}
+
+// NewHandler は、ルーティングを設定したHTTPハンドラを返す。
+func NewHandler(todoDB *sql.DB) http.Handler {
+	return newHandler(todoDB,
+		middleware.NewAccessLogMiddleware(),
+		middleware.NewUserAgentRecordMiddleware(),
+		middleware.NewRecoveryMiddleware(),
+	)
+}
+
+func newHandler(todoDB *sql.DB, ms ...middleware.HTTPMiddleware) http.Handler {
+	mux := http.NewServeMux()
+
+	// NOTE: ヘルスチェック用エンドポイントにも他と同様のミドルウェアを適用して良いかは議論の余地がある。
+	mux.Handle("/healthz", handler.NewHealthzHandler())
+
+	mux.Handle("/todos", handler.NewTODOHandler(service.NewTODOService(todoDB)))
+	mux.Handle("/do-panic", handler.NewPanicHandler())
+
+	// *http.ServeMux は http.Handler interfaceを満たすため、他のハンドラ同様ミドルウェアが適用できる。
+	//
+	// Ref: https://blog.afoolishmanifesto.com/posts/nesting-middleware-in-golang/
+	return middleware.With(
+		mux,
+		ms...,
+	)
 }
