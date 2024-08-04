@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"net/http"
 	"strings"
+	"unicode"
 )
 
 const (
@@ -48,6 +49,15 @@ func NewBasicAuthMiddleware(cred BasicAuthInfo) *basicAuthMiddleware {
 	}
 }
 
+func containsControl(s string) bool {
+	for _, r := range s {
+		if unicode.IsControl(r) {
+			return true
+		}
+	}
+	return false
+}
+
 // NOTE: サーバ起動失敗時に表示される情報であり、エラー詳細を含んでもユーザに見えないため問題ない。
 func (cred *BasicAuthInfo) validate() error {
 	if cred.userID == "" || cred.password == "" {
@@ -55,6 +65,9 @@ func (cred *BasicAuthInfo) validate() error {
 	}
 	if strings.Contains(cred.userID, ":") {
 		return fmt.Errorf("Basic認証のユーザIDは、コロン(:)を含んではいけません")
+	}
+	if containsControl(cred.userID) || containsControl(cred.password) {
+		return fmt.Errorf("Basic認証のユーザID/パスワードは、制御文字を含んではいけません")
 	}
 	return nil
 }
