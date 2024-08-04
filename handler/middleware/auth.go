@@ -17,8 +17,8 @@ func NewBasicAuthCredential(userID, password string) (*BasicAuthCredential, erro
 		userID:   userID,
 		password: password,
 	}
-	if !cred.isValid() {
-		return nil, fmt.Errorf("与えられた認証情報は、Basic認証として不適切です")
+	if err := cred.validate(); err != nil {
+		return nil, err
 	}
 	return cred, nil
 }
@@ -34,11 +34,11 @@ func NewBasicAuthMiddleware(cred BasicAuthCredential) *basicAuthMiddleware {
 	}
 }
 
-func (cred *BasicAuthCredential) isValid() bool {
+func (cred *BasicAuthCredential) validate() error {
 	if cred.userID == "" || cred.password == "" {
-		return false
+		return fmt.Errorf("与えられた認証情報は、Basic認証として不適切です")
 	}
-	return true
+	return nil
 }
 
 // ServeNext は、 h の前後で取得した情報を元に、 アクセスログを記録する。
