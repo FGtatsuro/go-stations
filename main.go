@@ -53,7 +53,7 @@ func realMain() error {
 	defer todoDB.Close()
 
 	// NOTE: 新しいエンドポイントの登録はrouter.NewRouterの内部で行うようにする
-	mux := router.NewRouter(todoDB)
+	mux := router.NewHandler(todoDB)
 	server := &http.Server{
 		Addr:    port,
 		Handler: mux,
