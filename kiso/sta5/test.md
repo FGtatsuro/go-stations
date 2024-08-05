@@ -42,6 +42,6 @@ $ curl -v -X POST \
 
 ## 検証内容
 
-Markdownでは表現しづらいため、以下のスプレッドシート(要権限)に記録する。
+Markdownでは表現しづらいため、以下のスプレッドシートに記録する。
 
 https://docs.google.com/spreadsheets/d/11VtZYNc7xawtvzFL-5idTUP3WT_06aHSutnnbsvB3jU/edit?gid=0#gid=0
