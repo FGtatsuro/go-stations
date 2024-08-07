@@ -62,9 +62,9 @@ func (bai *BasicAuthInfo) Authenticate(r *http.Request) error {
 	return nil
 }
 
-// Challenge は、Basic認証のチャレンジ文字列を返す。
-func (bai *BasicAuthInfo) Challenge() string {
-	return fmt.Sprintf(`Basic realm="%s"`, bai.realm)
+// Challenge は、Basic認証のチャレンジレスポンスを生成する。
+func (bai *BasicAuthInfo) Challenge(w http.ResponseWriter) {
+	w.Header().Add("WWW-Authenticate", fmt.Sprintf(`Basic realm="%s"`, bai.realm))
 }
 
 func containsControl(s string) bool {

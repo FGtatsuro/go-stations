@@ -1,7 +1,6 @@
 package middleware
 
 import (
-	"fmt"
 	"net/http"
 
 	"github.com/TechBowl-japan/go-stations/pkg/basicauth"
@@ -22,7 +21,7 @@ func NewBasicAuthMiddleware(bai basicauth.BasicAuthInfo) *basicAuthMiddleware {
 func (m *basicAuthMiddleware) ServeNext(h http.Handler) http.Handler {
 	fn := func(w http.ResponseWriter, r *http.Request) {
 		if err := m.bai.Authenticate(r); err != nil {
-			w.Header().Add("WWW-Authenticate", fmt.Sprintf(`Basic realm="%s"`, m.bai.Challenge()))
+			m.bai.Challenge(w)
 			w.WriteHeader(http.StatusUnauthorized)
 			return
 		}
