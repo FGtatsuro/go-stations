@@ -9,9 +9,7 @@ import (
 
 type uaContextKey string
 
-const (
-	UAContextKeyOS = uaContextKey("os")
-)
+const UAContextKeyOS = uaContextKey("os")
 
 type userAgentRecordMiddleware struct{}
 
