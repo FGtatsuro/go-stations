@@ -49,9 +49,8 @@ func (m *accessLogMiddleware) ServeNext(h http.Handler) http.Handler {
 			ResponseWriter: w,
 			status:         http.StatusOK,
 		}
-		before := time.Now()
+		now := time.Now()
 		h.ServeHTTP(sw, r)
-		after := time.Now()
 
 		// NOTE: OS情報がContextに記録されている事を前提とする。
 		os, ok := r.Context().Value(UAContextKeyOS).(string)
@@ -60,8 +59,8 @@ func (m *accessLogMiddleware) ServeNext(h http.Handler) http.Handler {
 		}
 
 		al := accessLog{
-			Timestamp: before,
-			Latency:   after.Sub(before).Milliseconds(),
+			Timestamp: now,
+			Latency:   time.Since(now).Milliseconds(),
 			Path:      r.URL.Path,
 			OS:        os,
 			Status:    sw.status,
