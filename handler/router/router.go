@@ -6,6 +6,7 @@ import (
 
 	"github.com/TechBowl-japan/go-stations/handler"
 	"github.com/TechBowl-japan/go-stations/handler/middleware"
+	"github.com/TechBowl-japan/go-stations/pkg/basicauth"
 	"github.com/TechBowl-japan/go-stations/service"
 )
 
@@ -50,7 +51,7 @@ func NewHandlerWithBasicAuth(
 	todoDB *sql.DB,
 	userID, password string,
 ) (http.Handler, error) {
-	bac, err := middleware.NewBasicAuthInfoWithRealm(
+	bai, err := basicauth.NewBasicAuthInfoWithRealm(
 		userID,
 		password,
 		"go-stations-api",
@@ -66,7 +67,7 @@ func NewHandlerWithBasicAuth(
 	// AccessLogMiddleware/UserAgentRecordMiddleware で発生したpanicは、
 	// [net/http] のデフォルトのリカバリで処理される事に留意する。
 	return newHandler(todoDB,
-		bac,
+		bai,
 		middleware.NewRecoveryMiddleware(),
 		middleware.NewAccessLogMiddleware(),
 		middleware.NewUserAgentRecordMiddleware(),
@@ -75,7 +76,7 @@ func NewHandlerWithBasicAuth(
 
 func newHandler(
 	todoDB *sql.DB,
-	cred *middleware.BasicAuthInfo,
+	bai *basicauth.BasicAuthInfo,
 	ms ...middleware.HTTPMiddleware,
 ) http.Handler {
 	mux := http.NewServeMux()
@@ -92,8 +93,8 @@ func newHandler(
 	api.Handle("/todos", handler.NewTODOHandler(service.NewTODOService(todoDB)))
 	api.Handle("/do-panic", handler.NewPanicHandler())
 	h := http.StripPrefix("/api", api)
-	if cred != nil {
-		h = middleware.With(h, middleware.NewBasicAuthMiddleware(*cred))
+	if bai != nil {
+		h = middleware.With(h, middleware.NewBasicAuthMiddleware(*bai))
 	}
 	mux.Handle("/api/", h)
 
